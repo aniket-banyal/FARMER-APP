@@ -217,15 +217,30 @@ class Cart(models.Model):
 
     def get_items(self):
         return self.cartitem_set.all()
+    def get_residueitems(self):
+        return self.residueitem_set.all()
 
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     machine = models.ForeignKey(Machine, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
+    phone= models.IntegerField('Phone', validators=[MaxValueValidator(9999999999),MinValueValidator(1000000000)],null=True,blank=True)
+    
 
     def __str__(self):
         return self.machine.name + ' ' + str(self.quantity)
+    
+
+
+
+class CartResidueItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
+    residue = models.ForeignKey(Residue, on_delete=models.CASCADE)
+   
+
+    def __str__(self):
+        return self.residue.type_of_residue   
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)

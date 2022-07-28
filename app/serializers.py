@@ -2,7 +2,7 @@ from django.contrib.auth import password_validation
 from rest_framework import serializers
 
 from app.models import (Bookmark, CartItem, Delivery, Machine, Order,
-                        RentOrder, Residue, ResidueOrder, User)
+                        RentOrder, Residue, ResidueOrder, User, CartResidueItem)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -130,6 +130,24 @@ class CartItemUpdateSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = ['machine', 'quantity']
         read_only_fields = ['machine']
+      
+
+class CartResidueCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CartResidueItem
+        fields = ['cart', 'residue',]
+        write_only_fields = ['cart']
+
+
+class CartResidueDetailSerializer(serializers.ModelSerializer):
+    residue = ResidueSerializer()
+
+    class Meta:
+        model = CartResidueItem
+        fields = ['id', 'residue']
+        read_only_fields = ['id']
+
+
 
 
 class ChangePasswordSerializer(serializers.Serializer):

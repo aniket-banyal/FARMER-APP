@@ -3,7 +3,7 @@ from django.conf.urls.static import static
 from django.urls import path
 from rest_framework.authtoken import views as auth_views
 
-from app.views import (CartCheckoutView, CartItemView, CartView,
+from app.views import (CartCheckoutView , CartItemView, CartView,
                        ChangePasswordView, Connections, MachineDetailView,
                        MachinesView, OrderDetailView, OrdersView, ProfileView,
                        RentOrderDetailView, RentOrdersView, ResidueDetailView,

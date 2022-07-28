@@ -6,12 +6,15 @@ from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 from rest_framework.views import APIView
 
+
 from app.models import (CartItem, Machine, Order, RentOrder, Residue,
-                        ResidueOrder, User)
+                        ResidueOrder, User 
+                        ,CartResidueItem)
 from app.permissions import IsFarmer
 from app.serializers import (CartItemCreateSerializer,
                              CartItemDetailSerializer,
                              CartItemUpdateSerializer,
+                             CartResidueDetailSerializer,CartResidueCreateSerializer,
                              ChangePasswordSerializer, MachineSerializer,
                              OrderCustomerSerializer, OrderDetailSerializer,
                              OrderSerializer, RentMachineSerializer,
@@ -395,17 +398,33 @@ class Connections(APIView):
 
 class CartView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = CartItemDetailSerializer
-
+    def get_serializer_class(self):
+        user = self.request.user
+        if user.is_industry:
+          return CartResidueDetailSerializer
+        return CartItemDetailSerializer
+    
     def get_queryset(self):
         user = self.request.user
+        if user.is_industry:
+          return CartResidueItem.objects.filter(cart__user=user)
         return CartItem.objects.filter(cart__user=user)
 
     def post(self, request, *args, **kwargs):
-        cart = self.request.user.cart
+        cart = self.request.user
         items = request.data['items']
+        user = self.request.user
+        if user.is_industry:
+          for item in items:
+            existing_item = CartResidueItem.objects.filter(residue__id=item['residue'])
+            if len(existing_item) > 0:
+                continue
 
-        for item in items:
+            item['cart'] = cart.id
+            serializer = CartResidueCreateSerializer(data=item)
+            
+        else:
+         for item in items:
             existing_item = CartItem.objects.filter(machine__id=item['machine'])
             if len(existing_item) > 0:
                 existing_item[0].quantity += item['quantity']
@@ -413,9 +432,9 @@ class CartView(generics.ListCreateAPIView):
                 continue
 
             item['cart'] = cart.id
-            serializer = CartItemCreateSerializer(data=item)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
+            serializer = CartItemCreateSerializer(data=item)    
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
         return Response(status=status.HTTP_201_CREATED)
 
@@ -431,7 +450,7 @@ class CartItemView(generics.RetrieveUpdateDestroyAPIView):
     def put(self, request, *args, **kwargs):
         item = self.get_object()
         cart = item.cart
-        if cart != self.request.user.cart:
+        if cart != self.request.user:
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         try:
@@ -451,9 +470,11 @@ class CartCheckoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
+        print(request.data)
+        
         cart = request.user.cart
         for item in cart.get_items():
-            Order.objects.create(customer=request.user, machine=item.machine, quantity=item.quantity)
+            Order.objects.create(customer=request.user, machine=item.machine, quantity=item.quantity,phone=request.data['phone'],pincode=request.data['pincode'])
             item.delete()
 
         return Response(status=status.HTTP_200_OK)
