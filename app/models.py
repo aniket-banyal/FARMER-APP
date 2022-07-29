@@ -218,7 +218,7 @@ class Cart(models.Model):
     def get_items(self):
         return self.cartitem_set.all()
     def get_residueitems(self):
-        return self.residueitem_set.all()
+        return self.cartresidueitem_set.all()
 
 
 class CartItem(models.Model):

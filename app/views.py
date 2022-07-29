@@ -356,6 +356,8 @@ class ResidueOrdersView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        if user.is_industry:
+           return ResidueOrder.objects.filter(customer=user) 
         return ResidueOrder.objects.filter(residue__owner=user)
 
     def perform_create(self, serializer):
@@ -365,21 +367,22 @@ class ResidueOrdersView(generics.ListCreateAPIView):
 class ResidueOrderDetailView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ResidueOrderCreateSerializer
+    queryset = ResidueOrder.objects.all()
 
-    def get_queryset(self):
-        user = self.request.user
-        return ResidueOrder.objects.filter(residue__owner=user)
+    # def get_queryset(self):
+    #     user = self.request.user
+    #     return ResidueOrder.objects.filter(residue__owner=user)
 
     def update(self, request, *args, **kwargs):
-        residue_order = self.get_object()
-        if residue_order.residue.owner != request.user:
+        residue = self.get_object()
+        if residue.owner != request.user:
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         try:
             data = {"status": request.data['status']}
         except KeyError:
             raise ValidationError()
-
+        residue_order=self.get_object()
         serializer = self.get_serializer(residue_order, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -433,6 +436,7 @@ class CartView(generics.ListCreateAPIView):
 
             item['cart'] = cart.id
             serializer = CartItemCreateSerializer(data=item)    
+        
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -471,10 +475,16 @@ class CartCheckoutView(APIView):
 
     def get(self, request, *args, **kwargs):
         print(request.data)
-        
+        user = self.request.user
         cart = request.user.cart
-        for item in cart.get_items():
+        if user.is_industry:
+          for item in cart.get_residueitems():
+            ResidueOrder.objects.create(customer=request.user, residue=item.residue ,phone=request.data['phone'],pincode=request.data['pincode'])
+            item.delete()
+        else:  
+          for item in cart.get_items():
+           
             Order.objects.create(customer=request.user, machine=item.machine, quantity=item.quantity,phone=request.data['phone'],pincode=request.data['pincode'])
             item.delete()
-
+         
         return Response(status=status.HTTP_200_OK)
