@@ -8,13 +8,12 @@ from rest_framework.views import APIView
 
 
 from app.models import (CartItem, Machine, Order, RentOrder, Residue,
-                        ResidueOrder, User 
-                        ,CartResidueItem)
+                        ResidueOrder, User, CartResidueItem)
 from app.permissions import IsFarmer
 from app.serializers import (CartItemCreateSerializer,
                              CartItemDetailSerializer,
-                             CartItemUpdateSerializer,
-                             CartResidueDetailSerializer,CartResidueCreateSerializer,
+                             CartItemUpdateSerializer, CartRentCreateSerializer, CartRentDetailSerializer,
+                             CartResidueDetailSerializer, CartResidueCreateSerializer,
                              ChangePasswordSerializer, MachineSerializer,
                              OrderCustomerSerializer, OrderDetailSerializer,
                              OrderSerializer, RentMachineSerializer,
@@ -51,8 +50,6 @@ class UsersView(generics.RetrieveAPIView):
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    
-    
 
 
 class ProfileView(generics.RetrieveUpdateDestroyAPIView):
@@ -64,7 +61,8 @@ class ProfileView(generics.RetrieveUpdateDestroyAPIView):
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
-        serializer = UserUpdateSerializer(instance=request.user, data=request.data, partial=partial)
+        serializer = UserUpdateSerializer(
+            instance=request.user, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -90,7 +88,8 @@ class MachinesView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = MachineSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['for_rent', 'for_sale', 'owner__location', 'discount', 'name']
+    filterset_fields = ['for_rent', 'for_sale',
+                        'owner__location', 'discount', 'name']
 
     def get_serializer_class(self):
         method = self.request.method
@@ -125,7 +124,8 @@ class MachinesView(generics.ListCreateAPIView):
         if self.request.user.is_industry:
             serializer.save(owner=self.request.user)
         else:
-            serializer.save(owner=self.request.user, for_sale=False, for_rent=True)
+            serializer.save(owner=self.request.user,
+                            for_sale=False, for_rent=True)
 
 
 class MachineDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -160,7 +160,8 @@ class MachineDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         partial = kwargs.pop('partial', False)
-        serializer = self.get_serializer(machine, data=request.data, partial=partial)
+        serializer = self.get_serializer(
+            machine, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -292,7 +293,8 @@ class ResiduesView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        sold_residues = [order.residue.id for order in ResidueOrder.objects.all() if order.status == ResidueOrder.ACCEPTED]
+        sold_residues = [order.residue.id for order in ResidueOrder.objects.all(
+        ) if order.status == ResidueOrder.ACCEPTED]
         residues = Residue.objects.exclude(pk__in=sold_residues)
 
         if user.is_industry:
@@ -328,7 +330,8 @@ class ResidueDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         partial = kwargs.pop('partial', False)
-        serializer = self.get_serializer(residue, data=request.data, partial=partial)
+        serializer = self.get_serializer(
+            residue, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -357,7 +360,7 @@ class ResidueOrdersView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.is_industry:
-           return ResidueOrder.objects.filter(customer=user) 
+            return ResidueOrder.objects.filter(customer=user)
         return ResidueOrder.objects.filter(residue__owner=user)
 
     def perform_create(self, serializer):
@@ -382,8 +385,9 @@ class ResidueOrderDetailView(generics.UpdateAPIView):
             data = {"status": request.data['status']}
         except KeyError:
             raise ValidationError()
-        residue_order=self.get_object()
-        serializer = self.get_serializer(residue_order, data=data, partial=True)
+        residue_order = self.get_object()
+        serializer = self.get_serializer(
+            residue_order, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -401,44 +405,70 @@ class Connections(APIView):
 
 class CartView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
+
     def get_serializer_class(self):
         user = self.request.user
         if user.is_industry:
-          return CartResidueDetailSerializer
+            return CartResidueDetailSerializer
+        rent = self.request.query_params.get('rent')
+        if rent and rent.lower() == 'true':
+            return CartRentDetailSerializer
         return CartItemDetailSerializer
-    
+
     def get_queryset(self):
         user = self.request.user
         if user.is_industry:
-          return CartResidueItem.objects.filter(cart__user=user)
-        return CartItem.objects.filter(cart__user=user)
+            return CartResidueItem.objects.filter(cart__user=user)
+        rent = self.request.query_params.get('rent')
+        if rent and rent.lower() == 'true':
+            return CartItem.objects.filter(cart__user=user, rent=True)
+        return CartItem.objects.filter(cart__user=user, rent=False)
 
     def post(self, request, *args, **kwargs):
         cart = self.request.user
         items = request.data['items']
+
+        rent = self.request.query_params.get('rent', False)
+        rent = rent and rent.lower() == 'true'
         user = self.request.user
         if user.is_industry:
-          for item in items:
-            existing_item = CartResidueItem.objects.filter(residue__id=item['residue'])
-            if len(existing_item) > 0:
-                continue
+            for item in items:
+                existing_item = CartResidueItem.objects.filter(
+                    residue__id=item['residue'])
+                if len(existing_item) > 0:
+                    continue
 
-            item['cart'] = cart.id
-            serializer = CartResidueCreateSerializer(data=item)
-            
+                item['cart'] = cart.id
+                serializer = CartResidueCreateSerializer(data=item)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+        if rent:
+            for item in items:
+                existing_item = CartItem.objects.filter(
+                    machine__id=item['machine'], rent=True)
+                if len(existing_item) > 0:
+                    existing_item[0].num_of_days += item['num_of_days']
+                    existing_item[0].save()
+                    continue
+
+                item['cart'] = cart.id
+                serializer = CartRentCreateSerializer(data=item)
+                serializer.is_valid(raise_exception=True)
+                serializer.save(rent=True)
         else:
-         for item in items:
-            existing_item = CartItem.objects.filter(machine__id=item['machine'])
-            if len(existing_item) > 0:
-                existing_item[0].quantity += item['quantity']
-                existing_item[0].save()
-                continue
+            for item in items:
+                existing_item = CartItem.objects.filter(
+                    machine__id=item['machine'], rent=False)
+                if len(existing_item) > 0:
+                    existing_item[0].quantity += item['quantity']
+                    existing_item[0].save()
+                    continue
 
-            item['cart'] = cart.id
-            serializer = CartItemCreateSerializer(data=item)    
-        
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+                item['cart'] = cart.id
+                serializer = CartItemCreateSerializer(data=item)
+
+                serializer.is_valid(raise_exception=True)
+                serializer.save(rent=False)
 
         return Response(status=status.HTTP_201_CREATED)
 
@@ -464,7 +494,8 @@ class CartItemView(generics.RetrieveUpdateDestroyAPIView):
         except (KeyError, TypeError, ValueError, ValidationError):
             return Response({'quantity': ['quantity should be a positive integer']}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = CartItemUpdateSerializer(instance=item, data={'quantity': quantity})
+        serializer = CartItemUpdateSerializer(
+            instance=item, data={'quantity': quantity})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -478,13 +509,16 @@ class CartCheckoutView(APIView):
         user = self.request.user
         cart = request.user.cart
         if user.is_industry:
-          for item in cart.get_residueitems():
-            ResidueOrder.objects.create(customer=request.user, residue=item.residue ,phone=request.data['phone'],pincode=request.data['pincode'])
-            item.delete()
-        else:  
-          for item in cart.get_items():
-           
-            Order.objects.create(customer=request.user, machine=item.machine, quantity=item.quantity,phone=request.data['phone'],pincode=request.data['pincode'])
-            item.delete()
-         
+            for item in cart.get_residueitems():
+                ResidueOrder.objects.create(customer=request.user, residue=item.residue,
+                                            phone=request.data['phone'], pincode=request.data['pincode'])
+                item.delete()
+
+        else:
+            for item in cart.get_items():
+
+                Order.objects.create(customer=request.user, machine=item.machine, quantity=item.quantity,
+                                     phone=request.data['phone'], pincode=request.data['pincode'])
+                item.delete()
+
         return Response(status=status.HTTP_200_OK)

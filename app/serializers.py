@@ -130,8 +130,22 @@ class CartItemUpdateSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = ['machine', 'quantity']
         read_only_fields = ['machine']
-      
+        
 
+class CartRentCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CartItem
+        fields = ['cart', 'machine', 'num_of_days']
+        write_only_fields = ['cart']        
+      
+class CartRentDetailSerializer(serializers.ModelSerializer):
+    machine = MachineSerializer()
+
+    class Meta:
+        model = CartItem
+        fields = ['id', 'machine', 'num_of_days']
+        read_only_fields = ['id']
+        
 class CartResidueCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartResidueItem
