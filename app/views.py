@@ -238,7 +238,10 @@ class RentOrdersView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return RentOrder.objects.filter(machine__owner=user)
+        own = self.request.query_params.get('own')
+        if own and own.lower() == 'true':
+            return RentOrder.objects.filter(machine__owner=user)
+        return RentOrder.objects.filter(customer=user)
 
     def perform_create(self, serializer):
         machine = serializer.validated_data['machine']
@@ -512,6 +515,13 @@ class CartCheckoutView(APIView):
             for item in cart.get_residueitems():
                 ResidueOrder.objects.create(customer=request.user, residue=item.residue,
                                             phone=request.data['phone'], pincode=request.data['pincode'])
+                item.delete()
+        rent = self.request.query_params.get('rent')
+        if rent and rent.lower() == 'true':
+            for item in cart.get_rentitems():
+
+                RentOrder.objects.create(
+                    customer=request.user, machine=item.machine, num_of_days=item.num_of_days)
                 item.delete()
 
         else:
