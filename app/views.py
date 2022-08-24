@@ -484,7 +484,12 @@ class CartItemView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return CartItem.objects.filter(cart__user=user)
+
+        if user.is_industry:
+            return CartResidueItem.objects.filter(cart__user=user)
+
+        else:
+            return CartItem.objects.filter(cart__user=user)
 
     def put(self, request, *args, **kwargs):
         item = self.get_object()
