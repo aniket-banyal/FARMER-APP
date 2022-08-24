@@ -431,9 +431,10 @@ class CartView(generics.ListCreateAPIView):
         cart = self.request.user
         items = request.data['items']
 
+        user = self.request.user
+        print(user.is_industry)
         rent = self.request.query_params.get('rent', False)
         rent = rent and rent.lower() == 'true'
-        user = self.request.user
         if user.is_industry:
             for item in items:
                 existing_item = CartResidueItem.objects.filter(
@@ -445,7 +446,8 @@ class CartView(generics.ListCreateAPIView):
                 serializer = CartResidueCreateSerializer(data=item)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-        if rent:
+
+        elif rent:
             for item in items:
                 existing_item = CartItem.objects.filter(
                     machine__id=item['machine'], rent=True)
