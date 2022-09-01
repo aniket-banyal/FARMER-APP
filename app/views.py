@@ -380,7 +380,7 @@ class ResidueOrderDetailView(generics.UpdateAPIView):
     #     return ResidueOrder.objects.filter(residue__owner=user)
 
     def update(self, request, *args, **kwargs):
-        residue = self.get_object()
+        residue= self.get_object().residue
         if residue.owner != request.user:
             return Response(status=status.HTTP_403_FORBIDDEN)
 
