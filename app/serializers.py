@@ -50,9 +50,20 @@ class DeliverySerializer(serializers.ModelSerializer):
 
 
 class BookmarkSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Bookmark
-        fields = '__all__'
+        fields = ['id', 'user', 'machine']
+        read_only_fields = ['id', 'user']
+
+
+class BookmarkDetailSerializer(serializers.ModelSerializer):
+    machine = MachineSerializer()
+
+    class Meta:
+        model = Bookmark
+        fields = ['id', 'user', 'machine']
+        read_only_fields = ['id', 'user']
 
 
 class ResidueCreateSerializer(serializers.ModelSerializer):

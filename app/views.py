@@ -20,7 +20,7 @@ from app.serializers import (CartItemCreateSerializer,
                              RentOrderSerializer, ResidueCreateSerializer,
                              ResidueOrderCreateSerializer,
                              ResidueOrderSerializer, ResidueSerializer,
-                             UserSerializer, UserUpdateSerializer, BookmarkSerializer)
+                             UserSerializer, UserUpdateSerializer, BookmarkSerializer, BookmarkDetailSerializer)
 
 
 class registerUser(APIView):
@@ -597,20 +597,33 @@ class CartCheckoutView(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
-# class BookmarkView(generics.ListCreateAPIView):
-#     permission_classes = [IsAuthenticated]
-#     serializer_class = BookmarkSerializer
+class BookmarkView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = BookmarkSerializer
 
-#     def get_serializer_class(self):
-#         return BookmarkSerializer
+    def get_serializer_class(self):
+        method = self.request.method
+        if method == 'GET':
+            return BookmarkDetailSerializer
+        return BookmarkSerializer
 
-#     def get_queryset(self):
-#         user = self.request.user
-#         return Bookmark.objects.filter(user=user)
+    def get_queryset(self):
+        return Bookmark.objects.filter(user=self.request.user)
 
-#     def perform_create(self, serializer):
-#         serializer.save(user=self.request.user)
+    def perform_create(self, serializer):
+
+        serializer.save(user=self.request.user)
 
 
-# class BookmarkDetailView(generics.RetrieveUpdateDestroyAPIView):
-#     permission_classes = [IsAuthenticated]
+class BookmarkDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = BookmarkSerializer
+    queryset = Bookmark.objects.all()
+
+    def delete(self, request, **kwargs):
+        bookmark = self.get_object()
+        if bookmark.user != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        bookmark.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

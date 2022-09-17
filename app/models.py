@@ -123,7 +123,7 @@ class Bookmark(models.Model):
     machine = models.ForeignKey(Machine, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.user + self.machine
+        return f'{self.user.name} {self.machine.name}'
 
 
 class Residue(models.Model):

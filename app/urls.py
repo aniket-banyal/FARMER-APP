@@ -5,7 +5,7 @@ from rest_framework.authtoken import views as auth_views
 
 from app.views import (CartCheckoutView, CartItemView, CartView,
                        ChangePasswordView, Connections, MachineDetailView,
-                       Machine_modelsView, Machine_modelsDetailView,
+                       Machine_modelsView, Machine_modelsDetailView, BookmarkView, BookmarkDetailView,
                        MachinesView, OrderDetailView, OrdersView, ProfileView,
                        RentOrderDetailView, RentOrdersView, ResidueDetailView,
                        ResidueOrderDetailView, ResidueOrdersView, ResiduesView,
@@ -22,6 +22,9 @@ urlpatterns = [
     path('machine_models/', Machine_modelsView.as_view(), name='machine_models'),
     path('machine_models/<int:pk>',
          Machine_modelsDetailView.as_view(), name='machine_model'),
+    path('bookmarks/', BookmarkView.as_view(), name='bookmarks'),
+    path('bookmarks/<int:pk>', BookmarkDetailView.as_view(),
+         name='bookmarksdetails'),
     path('residues/', ResiduesView.as_view(), name='residues'),
     path('residues/type', ResidueTypeView.as_view(), name='residue-type'),
     path('residues/<int:pk>', ResidueDetailView.as_view(), name='residue'),
