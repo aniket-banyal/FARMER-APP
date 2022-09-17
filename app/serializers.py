@@ -2,7 +2,7 @@ from django.contrib.auth import password_validation
 from rest_framework import serializers
 
 from app.models import (Bookmark, CartItem, Delivery, Machine, Order,
-                        RentOrder, Residue, ResidueOrder, User, CartResidueItem)
+                        RentOrder, Residue, ResidueOrder, User, CartResidueItem, Machine_models)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -23,14 +23,23 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 class MachineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Machine
-        fields = ['id', 'owner', 'name', 'description', 'details', 'quantity', 'warranty', 'guarantee', 'loyalty', 'for_sale', 'for_rent', 'sell_price', 'rent_price', 'discount', 'image']
+        fields = ['id', 'owner', 'name', 'description', 'details', 'quantity', 'warranty', 'guarantee',
+                  'loyalty', 'for_sale', 'for_rent', 'sell_price', 'rent_price', 'discount', 'image', 'debit', 'credit', 'upi', 'cash']
         read_only_fields = ['id', 'owner']
+
+
+class Machine_modelsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Machine_models
+        fields = ['id', 'admin', 'name', 'image1', 'image2']
+        read_only_fields = ['id', 'admin']
 
 
 class RentMachineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Machine
-        fields = ['id', 'owner', 'name', 'description', 'rent_price', 'discount', 'image']
+        fields = ['id', 'owner', 'name', 'description',
+                  'rent_price', 'discount', 'image']
         read_only_fields = ['id', 'owner']
 
 
@@ -49,7 +58,8 @@ class BookmarkSerializer(serializers.ModelSerializer):
 class ResidueCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Residue
-        fields = ['id', 'owner', 'type_of_residue', 'price','description', 'quantity','image']
+        fields = ['id', 'owner', 'type_of_residue',
+                  'price', 'description', 'quantity', 'image']
         read_only_fields = ['id', 'owner']
 
 
@@ -58,13 +68,15 @@ class ResidueSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Residue
-        fields = ['id', 'owner', 'type_of_residue', 'price','description', 'quantity','image',]
+        fields = ['id', 'owner', 'type_of_residue',
+                  'price', 'description', 'quantity', 'image', ]
 
 
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
-        fields = ['id', 'customer', 'machine', 'quantity', 'status', 'name_of_recipient', 'phone', 'state', 'city', 'pincode', 'address']
+        fields = ['id', 'customer', 'machine', 'quantity', 'status',
+                  'name_of_recipient', 'phone', 'state', 'city', 'pincode', 'address']
         read_only_fields = ['id', 'customer']
 
 
@@ -74,7 +86,8 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'customer', 'machine', 'quantity', 'status', 'name_of_recipient', 'phone', 'state', 'city', 'pincode', 'address']
+        fields = ['id', 'customer', 'machine', 'quantity', 'status',
+                  'name_of_recipient', 'phone', 'state', 'city', 'pincode', 'address']
         read_only_fields = ['id', 'customer']
 
 
@@ -83,7 +96,8 @@ class OrderCustomerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'machine', 'quantity', 'status', 'name_of_recipient', 'phone', 'state', 'city', 'pincode', 'address']
+        fields = ['id', 'machine', 'quantity', 'status', 'name_of_recipient',
+                  'phone', 'state', 'city', 'pincode', 'address']
 
 
 class RentOrderSerializer(serializers.ModelSerializer):
@@ -96,7 +110,8 @@ class RentOrderSerializer(serializers.ModelSerializer):
 class ResidueOrderCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResidueOrder
-        fields = ['customer', 'residue', 'status','name_of_recipient', 'phone', 'state', 'city', 'pincode', 'address']
+        fields = ['customer', 'residue', 'status', 'name_of_recipient',
+                  'phone', 'state', 'city', 'pincode', 'address']
         read_only_fields = ['customer']
 
 
@@ -106,7 +121,8 @@ class ResidueOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ResidueOrder
-        fields = ['id', 'customer', 'residue', 'status','name_of_recipient', 'phone', 'state', 'city', 'pincode', 'address']
+        fields = ['id', 'customer', 'residue', 'status', 'name_of_recipient',
+                  'phone', 'state', 'city', 'pincode', 'address']
 
 
 class CartItemCreateSerializer(serializers.ModelSerializer):
@@ -130,14 +146,15 @@ class CartItemUpdateSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = ['machine', 'quantity']
         read_only_fields = ['machine']
-        
+
 
 class CartRentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = ['cart', 'machine', 'num_of_days']
-        write_only_fields = ['cart']        
-      
+        write_only_fields = ['cart']
+
+
 class CartRentDetailSerializer(serializers.ModelSerializer):
     machine = MachineSerializer()
 
@@ -145,11 +162,12 @@ class CartRentDetailSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = ['id', 'machine', 'num_of_days']
         read_only_fields = ['id']
-        
+
+
 class CartResidueCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartResidueItem
-        fields = ['cart', 'residue',]
+        fields = ['cart', 'residue', ]
         write_only_fields = ['cart']
 
 
@@ -162,12 +180,13 @@ class CartResidueDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
-
-
 class ChangePasswordSerializer(serializers.Serializer):
-    old_password = serializers.CharField(max_length=128, write_only=True, required=True)
-    new_password1 = serializers.CharField(max_length=128, write_only=True, required=True)
-    new_password2 = serializers.CharField(max_length=128, write_only=True, required=True)
+    old_password = serializers.CharField(
+        max_length=128, write_only=True, required=True)
+    new_password1 = serializers.CharField(
+        max_length=128, write_only=True, required=True)
+    new_password2 = serializers.CharField(
+        max_length=128, write_only=True, required=True)
 
     def validate_old_password(self, value):
         user = self.context['request'].user
@@ -180,8 +199,10 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     def validate(self, data):
         if data['new_password1'] != data['new_password2']:
-            raise serializers.ValidationError({'new_password2': ("The two password fields didn't match.")})
-        password_validation.validate_password(data['new_password1'], self.context['request'].user)
+            raise serializers.ValidationError(
+                {'new_password2': ("The two password fields didn't match.")})
+        password_validation.validate_password(
+            data['new_password1'], self.context['request'].user)
         return data
 
     def save(self, **kwargs):

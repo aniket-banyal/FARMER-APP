@@ -8,19 +8,19 @@ from rest_framework.views import APIView
 
 
 from app.models import (CartItem, Machine, Order, RentOrder, Residue,
-                        ResidueOrder, User, CartResidueItem)
+                        ResidueOrder, User, CartResidueItem, Machine_models, Bookmark)
 from app.permissions import IsFarmer
 from app.serializers import (CartItemCreateSerializer,
                              CartItemDetailSerializer,
                              CartItemUpdateSerializer, CartRentCreateSerializer, CartRentDetailSerializer,
                              CartResidueDetailSerializer, CartResidueCreateSerializer,
-                             ChangePasswordSerializer, MachineSerializer,
+                             ChangePasswordSerializer, MachineSerializer, Machine_modelsSerializer,
                              OrderCustomerSerializer, OrderDetailSerializer,
                              OrderSerializer, RentMachineSerializer,
                              RentOrderSerializer, ResidueCreateSerializer,
                              ResidueOrderCreateSerializer,
                              ResidueOrderSerializer, ResidueSerializer,
-                             UserSerializer, UserUpdateSerializer)
+                             UserSerializer, UserUpdateSerializer, BookmarkSerializer)
 
 
 class registerUser(APIView):
@@ -84,6 +84,28 @@ class ChangePasswordView(UpdateAPIView):
         return Response(status=status.HTTP_200_OK)
 
 
+class Machine_modelsView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Machine_modelsSerializer
+
+    def get_serializer_class(self):
+        method = self.request.method
+
+        if method == 'GET':
+            return Machine_modelsSerializer
+
+        if method == 'POST':
+            return Machine_modelsSerializer
+
+    def get_queryset(self):
+
+        return Machine_models.objects.all()
+
+    def perform_create(self, serializer):
+
+        serializer.save(admin=self.request.user)
+
+
 class MachinesView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = MachineSerializer
@@ -93,6 +115,7 @@ class MachinesView(generics.ListCreateAPIView):
 
     def get_serializer_class(self):
         method = self.request.method
+
         if method == 'GET':
             for_rent = self.request.query_params.get('for_rent')
             own = self.request.query_params.get('own')
@@ -119,6 +142,8 @@ class MachinesView(generics.ListCreateAPIView):
         if own:
             return Machine.objects.filter(owner=user)
         return Machine.objects.exclude(owner=user)
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['name', 'discount']
 
     def perform_create(self, serializer):
         if self.request.user.is_industry:
@@ -126,6 +151,37 @@ class MachinesView(generics.ListCreateAPIView):
         else:
             serializer.save(owner=self.request.user,
                             for_sale=False, for_rent=True)
+
+
+class Machine_modelsDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = Machine_modelsSerializer
+
+    def get_serializer_class(self):
+        return Machine_modelsSerializer
+
+    def get_queryset(self):
+        return Machine_models.objects.all()
+
+    def update(self, request, *args, **kwargs):
+        machine_model = self.get_object()
+        if machine_model.admin != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        partial = kwargs.pop('partial', False)
+        serializer = self.get_serializer(
+            machine_model, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        machine_model = self.get_object()
+        if machine_model.admin != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        machine_model.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class MachineDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -380,7 +436,7 @@ class ResidueOrderDetailView(generics.UpdateAPIView):
     #     return ResidueOrder.objects.filter(residue__owner=user)
 
     def update(self, request, *args, **kwargs):
-        residue= self.get_object().residue
+        residue = self.get_object().residue
         if residue.owner != request.user:
             return Response(status=status.HTTP_403_FORBIDDEN)
 
@@ -539,3 +595,22 @@ class CartCheckoutView(APIView):
                 item.delete()
 
         return Response(status=status.HTTP_200_OK)
+
+
+# class BookmarkView(generics.ListCreateAPIView):
+#     permission_classes = [IsAuthenticated]
+#     serializer_class = BookmarkSerializer
+
+#     def get_serializer_class(self):
+#         return BookmarkSerializer
+
+#     def get_queryset(self):
+#         user = self.request.user
+#         return Bookmark.objects.filter(user=user)
+
+#     def perform_create(self, serializer):
+#         serializer.save(user=self.request.user)
+
+
+# class BookmarkDetailView(generics.RetrieveUpdateDestroyAPIView):
+#     permission_classes = [IsAuthenticated]

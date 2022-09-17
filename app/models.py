@@ -85,7 +85,22 @@ class Machine(models.Model):
     sell_price = models.IntegerField(default=0)
     rent_price = models.IntegerField(default=0)
     discount = models.IntegerField(default=0)  # percentage
+    # ask if to be removed??
     image = models.ImageField(upload_to='machine_images/')
+    debit = models.BooleanField(default=True)
+    credit = models.BooleanField(default=True)
+    upi = models.BooleanField(default=True)
+    cash = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Machine_models(models.Model):
+    admin = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
+    name = models.CharField(max_length=255)
+    image1 = models.ImageField(upload_to='machine_model_images/')
+    image2 = models.ImageField(upload_to='machine_model_images/')
 
     def __str__(self):
         return self.name
