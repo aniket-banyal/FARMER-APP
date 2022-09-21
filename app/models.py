@@ -86,6 +86,7 @@ class Machine(models.Model):
     rent_price = models.IntegerField(default=0)
     discount = models.IntegerField(default=0)  # percentage
     # ask if to be removed??
+    old_machine = models.BooleanField(default=False)
     image = models.ImageField(upload_to='machine_images/')
     debit = models.BooleanField(default=True)
     credit = models.BooleanField(default=True)

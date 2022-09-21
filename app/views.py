@@ -111,7 +111,7 @@ class MachinesView(generics.ListCreateAPIView):
     serializer_class = MachineSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['for_rent', 'for_sale',
-                        'owner__location', 'discount', 'name']
+                        'owner__location', 'discount', 'name', 'old_machine']
 
     def get_serializer_class(self):
         method = self.request.method
@@ -143,7 +143,7 @@ class MachinesView(generics.ListCreateAPIView):
             return Machine.objects.filter(owner=user)
         return Machine.objects.exclude(owner=user)
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['name', 'discount']
+    filterset_fields = ['name', 'discount', 'old_machine']
 
     def perform_create(self, serializer):
         if self.request.user.is_industry:
@@ -452,16 +452,6 @@ class ResidueOrderDetailView(generics.UpdateAPIView):
         return Response(serializer.data)
 
 
-class Connections(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        connections = user.get_connections()
-        serializer = UserSerializer(connections, many=True)
-        return Response(serializer.data)
-
-
 class CartView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
@@ -627,3 +617,13 @@ class BookmarkDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         bookmark.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class Connections(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        connections = user.get_connections()
+        serializer = UserSerializer(connections, many=True)
+        return Response(serializer.data)

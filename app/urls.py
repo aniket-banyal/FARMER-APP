@@ -25,6 +25,7 @@ urlpatterns = [
     path('bookmarks/', BookmarkView.as_view(), name='bookmarks'),
     path('bookmarks/<int:pk>', BookmarkDetailView.as_view(),
          name='bookmarksdetails'),
+    path('connections/', Connections.as_view(), name='connections'),
     path('residues/', ResiduesView.as_view(), name='residues'),
     path('residues/type', ResidueTypeView.as_view(), name='residue-type'),
     path('residues/<int:pk>', ResidueDetailView.as_view(), name='residue'),
@@ -38,7 +39,6 @@ urlpatterns = [
     path('residue-orders/', ResidueOrdersView.as_view(), name='residue-orders'),
     path('residue-orders/<int:pk>',
          ResidueOrderDetailView.as_view(), name='residue-order'),
-    path('connections/', Connections.as_view(), name='connections'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += [

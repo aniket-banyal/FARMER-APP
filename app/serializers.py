@@ -24,7 +24,7 @@ class MachineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Machine
         fields = ['id', 'owner', 'name', 'description', 'details', 'quantity', 'warranty', 'guarantee',
-                  'loyalty', 'for_sale', 'for_rent', 'sell_price', 'rent_price', 'discount', 'image', 'debit', 'credit', 'upi', 'cash']
+                  'loyalty', 'for_sale', 'for_rent', 'sell_price', 'rent_price', 'discount', 'old_machine', 'image', 'debit', 'credit', 'upi', 'cash']
         read_only_fields = ['id', 'owner']
 
 
