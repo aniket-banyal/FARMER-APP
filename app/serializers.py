@@ -23,23 +23,24 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 class MachineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Machine
-        fields = ['id', 'owner', 'name', 'description', 'details', 'quantity', 'warranty', 'guarantee',
-                  'loyalty', 'for_sale', 'for_rent', 'sell_price', 'rent_price', 'discount', 'old_machine', 'image', 'debit', 'credit', 'upi', 'cash']
+        fields = ['id', 'owner', 'name', 'quantity', 'warranty', 'guarantee',
+                  'loyalty', 'for_sale', 'for_rent', 'sell_price', 'rent_price', 'discount', 'old_machine', 'image', 'debit', 'credit', 'upi', 'cash', 'date']
         read_only_fields = ['id', 'owner']
 
 
 class Machine_modelsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Machine_models
-        fields = ['id', 'admin', 'name', 'image1', 'image2']
+        fields = ['id', 'admin', 'name', 'image1',
+                  'image2', 'description', 'details']
         read_only_fields = ['id', 'admin']
 
 
 class RentMachineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Machine
-        fields = ['id', 'owner', 'name', 'description',
-                  'rent_price', 'discount', 'image']
+        fields = ['id', 'owner', 'name',
+                  'rent_price', 'discount', 'image', 'date']
         read_only_fields = ['id', 'owner']
 
 
@@ -87,7 +88,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'customer', 'machine', 'quantity', 'status',
-                  'name_of_recipient', 'phone', 'state', 'city', 'pincode', 'address']
+                  'name_of_recipient', 'phone', 'state', 'city', 'pincode', 'address', 'date']
         read_only_fields = ['id', 'customer']
 
 
@@ -98,7 +99,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'customer', 'machine', 'quantity', 'status',
-                  'name_of_recipient', 'phone', 'state', 'city', 'pincode', 'address']
+                  'name_of_recipient', 'phone', 'state', 'city', 'pincode', 'address', 'date']
         read_only_fields = ['id', 'customer']
 
 
@@ -108,13 +109,13 @@ class OrderCustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'machine', 'quantity', 'status', 'name_of_recipient',
-                  'phone', 'state', 'city', 'pincode', 'address']
+                  'phone', 'state', 'city', 'pincode', 'address', 'date']
 
 
 class RentOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = RentOrder
-        fields = ['id', 'customer', 'machine', 'num_of_days', 'status']
+        fields = ['id', 'customer', 'machine', 'num_of_days', 'status', 'date']
         read_only_fields = ['id', 'customer']
 
 

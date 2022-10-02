@@ -6,6 +6,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 from django.core.validators import MinValueValidator, MaxValueValidator
+import datetime
 
 
 class User(AbstractUser):
@@ -74,8 +75,6 @@ class User(AbstractUser):
 class Machine(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
-    description = models.TextField()
-    details = models.JSONField(null=True, blank=True)
     quantity = models.PositiveIntegerField(default=1)
     warranty = models.IntegerField(default=3)  # number of years
     guarantee = models.IntegerField(default=1)  # number of years
@@ -86,6 +85,7 @@ class Machine(models.Model):
     rent_price = models.IntegerField(default=0)
     discount = models.IntegerField(default=0)  # percentage
     # ask if to be removed??
+    date = models.DateField(auto_now_add=True, blank=True)
     old_machine = models.BooleanField(default=False)
     image = models.ImageField(upload_to='machine_images/')
     debit = models.BooleanField(default=True)
@@ -102,6 +102,8 @@ class Machine_models(models.Model):
     name = models.CharField(max_length=255)
     image1 = models.ImageField(upload_to='machine_model_images/')
     image2 = models.ImageField(upload_to='machine_model_images/')
+    description = models.TextField()
+    details = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -181,9 +183,11 @@ class Order(models.Model):
         'Pincode', validators=[MaxValueValidator(999999), MinValueValidator(100000)])
     city = models.CharField(max_length=15, default="City")
     address = models.CharField(max_length=300, default="House Address")
+    date = models.DateField(auto_now_add=True,
+                            blank=True)
 
     def __str__(self):
-        return f'{self.customer.name} {self.machine.name} {self.quantity} {str(self.status)} {self.name_of_recipient} {self.phone} {self.state} {self.pincode} {self.city} {self.address}'
+        return f'{self.customer.name} {self.machine.name} {self.quantity} {str(self.status)} {self.name_of_recipient} {self.phone} {self.state} {self.pincode} {self.city} {self.address} {self.date}'
 
 
 class RentOrder(models.Model):
@@ -202,9 +206,10 @@ class RentOrder(models.Model):
     status = models.CharField(choices=STATUS_CHOICES,
                               max_length=30, default=PENDING)
     num_of_days = models.PositiveIntegerField()
+    date = models.DateField(auto_now_add=True, blank=True)
 
     def __str__(self):
-        return f'{self.customer.name} {self.machine.name} {self.num_of_days} {str(self.status)} '
+        return f'{self.customer.name} {self.machine.name} {self.num_of_days} {str(self.status)} {self.date}'
 
 
 class ResidueOrder(models.Model):

@@ -111,7 +111,7 @@ class MachinesView(generics.ListCreateAPIView):
     serializer_class = MachineSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['for_rent', 'for_sale',
-                        'owner__location', 'discount', 'name', 'old_machine']
+                        'owner__location', 'discount', 'name', 'old_machine', 'date']
 
     def get_serializer_class(self):
         method = self.request.method
@@ -143,7 +143,7 @@ class MachinesView(generics.ListCreateAPIView):
             return Machine.objects.filter(owner=user)
         return Machine.objects.exclude(owner=user)
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['name', 'discount', 'old_machine']
+    filterset_fields = ['name', 'discount', 'old_machine', 'date']
 
     def perform_create(self, serializer):
         if self.request.user.is_industry:
@@ -246,7 +246,7 @@ class OrdersView(generics.ListCreateAPIView):
         return OrderSerializer
 
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['status']
+    filterset_fields = ['status', 'date']
 
     def get_queryset(self):
         user = self.request.user
@@ -290,7 +290,7 @@ class RentOrdersView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = RentOrderSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['status']
+    filterset_fields = ['status', 'date']
 
     def get_queryset(self):
         user = self.request.user
@@ -311,7 +311,7 @@ class RentOrderDetailView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = RentOrderSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['status']
+    filterset_fields = ['status', 'date']
 
     def get_queryset(self):
         return RentOrder.objects.filter(machine__owner=self.request.user)
