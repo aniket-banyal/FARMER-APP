@@ -6,19 +6,21 @@ from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 from rest_framework.views import APIView
 
+
 from app.models import (CartItem, Machine, Order, RentOrder, Residue,
-                        ResidueOrder, User)
+                        ResidueOrder, User, CartResidueItem, Machine_models, Bookmark)
 from app.permissions import IsFarmer
 from app.serializers import (CartItemCreateSerializer,
                              CartItemDetailSerializer,
-                             CartItemUpdateSerializer,
-                             ChangePasswordSerializer, MachineSerializer,
+                             CartItemUpdateSerializer, CartRentCreateSerializer, CartRentDetailSerializer,
+                             CartResidueDetailSerializer, CartResidueCreateSerializer,
+                             ChangePasswordSerializer, MachineSerializer, Machine_modelsSerializer,
                              OrderCustomerSerializer, OrderDetailSerializer,
                              OrderSerializer, RentMachineSerializer,
                              RentOrderSerializer, ResidueCreateSerializer,
                              ResidueOrderCreateSerializer,
                              ResidueOrderSerializer, ResidueSerializer,
-                             UserSerializer, UserUpdateSerializer)
+                             UserSerializer, UserUpdateSerializer, BookmarkSerializer, BookmarkDetailSerializer)
 
 
 class registerUser(APIView):
@@ -59,7 +61,8 @@ class ProfileView(generics.RetrieveUpdateDestroyAPIView):
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
-        serializer = UserUpdateSerializer(instance=request.user, data=request.data, partial=partial)
+        serializer = UserUpdateSerializer(
+            instance=request.user, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -81,14 +84,38 @@ class ChangePasswordView(UpdateAPIView):
         return Response(status=status.HTTP_200_OK)
 
 
+class Machine_modelsView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = Machine_modelsSerializer
+
+    def get_serializer_class(self):
+        method = self.request.method
+
+        if method == 'GET':
+            return Machine_modelsSerializer
+
+        if method == 'POST':
+            return Machine_modelsSerializer
+
+    def get_queryset(self):
+
+        return Machine_models.objects.all()
+
+    def perform_create(self, serializer):
+
+        serializer.save(admin=self.request.user)
+
+
 class MachinesView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = MachineSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['for_rent', 'for_sale', 'owner__location', 'discount', 'name']
+    filterset_fields = ['for_rent', 'for_sale',
+                        'owner__location', 'discount', 'name', 'old_machine', 'date']
 
     def get_serializer_class(self):
         method = self.request.method
+
         if method == 'GET':
             for_rent = self.request.query_params.get('for_rent')
             own = self.request.query_params.get('own')
@@ -115,12 +142,46 @@ class MachinesView(generics.ListCreateAPIView):
         if own:
             return Machine.objects.filter(owner=user)
         return Machine.objects.exclude(owner=user)
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['name', 'discount', 'old_machine', 'date']
 
     def perform_create(self, serializer):
         if self.request.user.is_industry:
             serializer.save(owner=self.request.user)
         else:
-            serializer.save(owner=self.request.user, for_sale=False, for_rent=True)
+            serializer.save(owner=self.request.user,
+                            for_sale=False, for_rent=True)
+
+
+class Machine_modelsDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = Machine_modelsSerializer
+
+    def get_serializer_class(self):
+        return Machine_modelsSerializer
+
+    def get_queryset(self):
+        return Machine_models.objects.all()
+
+    def update(self, request, *args, **kwargs):
+        machine_model = self.get_object()
+        if machine_model.admin != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        partial = kwargs.pop('partial', False)
+        serializer = self.get_serializer(
+            machine_model, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        machine_model = self.get_object()
+        if machine_model.admin != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        machine_model.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class MachineDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -155,7 +216,8 @@ class MachineDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         partial = kwargs.pop('partial', False)
-        serializer = self.get_serializer(machine, data=request.data, partial=partial)
+        serializer = self.get_serializer(
+            machine, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -184,7 +246,7 @@ class OrdersView(generics.ListCreateAPIView):
         return OrderSerializer
 
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['status']
+    filterset_fields = ['status', 'date']
 
     def get_queryset(self):
         user = self.request.user
@@ -228,11 +290,14 @@ class RentOrdersView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = RentOrderSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['status']
+    filterset_fields = ['status', 'date']
 
     def get_queryset(self):
         user = self.request.user
-        return RentOrder.objects.filter(machine__owner=user)
+        own = self.request.query_params.get('own')
+        if own and own.lower() == 'true':
+            return RentOrder.objects.filter(machine__owner=user)
+        return RentOrder.objects.filter(customer=user)
 
     def perform_create(self, serializer):
         machine = serializer.validated_data['machine']
@@ -246,7 +311,7 @@ class RentOrderDetailView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = RentOrderSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['status']
+    filterset_fields = ['status', 'date']
 
     def get_queryset(self):
         return RentOrder.objects.filter(machine__owner=self.request.user)
@@ -287,7 +352,8 @@ class ResiduesView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        sold_residues = [order.residue.id for order in ResidueOrder.objects.all() if order.status == ResidueOrder.ACCEPTED]
+        sold_residues = [order.residue.id for order in ResidueOrder.objects.all(
+        ) if order.status == ResidueOrder.ACCEPTED]
         residues = Residue.objects.exclude(pk__in=sold_residues)
 
         if user.is_industry:
@@ -323,7 +389,8 @@ class ResidueDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         partial = kwargs.pop('partial', False)
-        serializer = self.get_serializer(residue, data=request.data, partial=partial)
+        serializer = self.get_serializer(
+            residue, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -351,6 +418,8 @@ class ResidueOrdersView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        if user.is_industry:
+            return ResidueOrder.objects.filter(customer=user)
         return ResidueOrder.objects.filter(residue__owner=user)
 
     def perform_create(self, serializer):
@@ -360,60 +429,97 @@ class ResidueOrdersView(generics.ListCreateAPIView):
 class ResidueOrderDetailView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ResidueOrderCreateSerializer
+    queryset = ResidueOrder.objects.all()
 
-    def get_queryset(self):
-        user = self.request.user
-        return ResidueOrder.objects.filter(residue__owner=user)
+    # def get_queryset(self):
+    #     user = self.request.user
+    #     return ResidueOrder.objects.filter(residue__owner=user)
 
     def update(self, request, *args, **kwargs):
-        residue_order = self.get_object()
-        if residue_order.residue.owner != request.user:
+        residue = self.get_object().residue
+        if residue.owner != request.user:
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         try:
             data = {"status": request.data['status']}
         except KeyError:
             raise ValidationError()
-
-        serializer = self.get_serializer(residue_order, data=data, partial=True)
+        residue_order = self.get_object()
+        serializer = self.get_serializer(
+            residue_order, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
 
 
-class Connections(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        connections = user.get_connections()
-        serializer = UserSerializer(connections, many=True)
-        return Response(serializer.data)
-
-
 class CartView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = CartItemDetailSerializer
+
+    def get_serializer_class(self):
+        user = self.request.user
+        if user.is_industry:
+            return CartResidueDetailSerializer
+        rent = self.request.query_params.get('rent')
+        if rent and rent.lower() == 'true':
+            return CartRentDetailSerializer
+        return CartItemDetailSerializer
 
     def get_queryset(self):
         user = self.request.user
-        return CartItem.objects.filter(cart__user=user)
+        if user.is_industry:
+            return CartResidueItem.objects.filter(cart__user=user)
+        rent = self.request.query_params.get('rent')
+        if rent and rent.lower() == 'true':
+            return CartItem.objects.filter(cart__user=user, rent=True)
+        return CartItem.objects.filter(cart__user=user, rent=False)
 
     def post(self, request, *args, **kwargs):
-        cart = self.request.user.cart
+        cart = self.request.user
         items = request.data['items']
 
-        for item in items:
-            existing_item = CartItem.objects.filter(machine__id=item['machine'])
-            if len(existing_item) > 0:
-                existing_item[0].quantity += item['quantity']
-                existing_item[0].save()
-                continue
+        user = self.request.user
+        print(user.is_industry)
+        rent = self.request.query_params.get('rent', False)
+        rent = rent and rent.lower() == 'true'
+        if user.is_industry:
+            for item in items:
+                existing_item = CartResidueItem.objects.filter(
+                    residue__id=item['residue'])
+                if len(existing_item) > 0:
+                    continue
 
-            item['cart'] = cart.id
-            serializer = CartItemCreateSerializer(data=item)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
+                item['cart'] = cart.id
+                serializer = CartResidueCreateSerializer(data=item)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+
+        elif rent:
+            for item in items:
+                existing_item = CartItem.objects.filter(
+                    machine__id=item['machine'], rent=True)
+                if len(existing_item) > 0:
+                    existing_item[0].num_of_days += item['num_of_days']
+                    existing_item[0].save()
+                    continue
+
+                item['cart'] = cart.id
+                serializer = CartRentCreateSerializer(data=item)
+                serializer.is_valid(raise_exception=True)
+                serializer.save(rent=True)
+        else:
+            for item in items:
+                existing_item = CartItem.objects.filter(
+                    machine__id=item['machine'], rent=False)
+                if len(existing_item) > 0:
+                    existing_item[0].quantity += item['quantity']
+                    existing_item[0].save()
+                    continue
+
+                item['cart'] = cart.id
+                serializer = CartItemCreateSerializer(data=item)
+
+                serializer.is_valid(raise_exception=True)
+                serializer.save(rent=False)
 
         return Response(status=status.HTTP_201_CREATED)
 
@@ -424,12 +530,17 @@ class CartItemView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return CartItem.objects.filter(cart__user=user)
+
+        if user.is_industry:
+            return CartResidueItem.objects.filter(cart__user=user)
+
+        else:
+            return CartItem.objects.filter(cart__user=user)
 
     def put(self, request, *args, **kwargs):
         item = self.get_object()
         cart = item.cart
-        if cart != self.request.user.cart:
+        if cart != self.request.user:
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         try:
@@ -439,7 +550,8 @@ class CartItemView(generics.RetrieveUpdateDestroyAPIView):
         except (KeyError, TypeError, ValueError, ValidationError):
             return Response({'quantity': ['quantity should be a positive integer']}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = CartItemUpdateSerializer(instance=item, data={'quantity': quantity})
+        serializer = CartItemUpdateSerializer(
+            instance=item, data={'quantity': quantity})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -449,9 +561,69 @@ class CartCheckoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
+        print(request.data)
+        user = self.request.user
         cart = request.user.cart
-        for item in cart.get_items():
-            Order.objects.create(customer=request.user, machine=item.machine, quantity=item.quantity)
-            item.delete()
+        if user.is_industry:
+            for item in cart.get_residueitems():
+                ResidueOrder.objects.create(customer=request.user, residue=item.residue,
+                                            phone=request.data['phone'], pincode=request.data['pincode'])
+                item.delete()
+        rent = self.request.query_params.get('rent')
+        if rent and rent.lower() == 'true':
+            for item in cart.get_rentitems():
+
+                RentOrder.objects.create(
+                    customer=request.user, machine=item.machine, num_of_days=item.num_of_days)
+                item.delete()
+
+        else:
+            for item in cart.get_items():
+
+                Order.objects.create(customer=request.user, machine=item.machine, quantity=item.quantity,
+                                     phone=request.data['phone'], pincode=request.data['pincode'])
+                item.delete()
 
         return Response(status=status.HTTP_200_OK)
+
+
+class BookmarkView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = BookmarkSerializer
+
+    def get_serializer_class(self):
+        method = self.request.method
+        if method == 'GET':
+            return BookmarkDetailSerializer
+        return BookmarkSerializer
+
+    def get_queryset(self):
+        return Bookmark.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+
+        serializer.save(user=self.request.user)
+
+
+class BookmarkDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = BookmarkSerializer
+    queryset = Bookmark.objects.all()
+
+    def delete(self, request, **kwargs):
+        bookmark = self.get_object()
+        if bookmark.user != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        bookmark.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class Connections(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        connections = user.get_connections()
+        serializer = UserSerializer(connections, many=True)
+        return Response(serializer.data)

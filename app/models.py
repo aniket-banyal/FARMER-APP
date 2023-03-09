@@ -1,9 +1,12 @@
+from email.policy import default
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
+from django.core.validators import MinValueValidator, MaxValueValidator
+import datetime
 
 
 class User(AbstractUser):
@@ -72,8 +75,6 @@ class User(AbstractUser):
 class Machine(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
-    description = models.TextField()
-    details = models.JSONField(null=True, blank=True)
     quantity = models.PositiveIntegerField(default=1)
     warranty = models.IntegerField(default=3)  # number of years
     guarantee = models.IntegerField(default=1)  # number of years
@@ -83,7 +84,26 @@ class Machine(models.Model):
     sell_price = models.IntegerField(default=0)
     rent_price = models.IntegerField(default=0)
     discount = models.IntegerField(default=0)  # percentage
+    # ask if to be removed??
+    date = models.DateField(auto_now_add=True, blank=True)
+    old_machine = models.BooleanField(default=False)
     image = models.ImageField(upload_to='machine_images/')
+    debit = models.BooleanField(default=True)
+    credit = models.BooleanField(default=True)
+    upi = models.BooleanField(default=True)
+    cash = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Machine_models(models.Model):
+    admin = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
+    name = models.CharField(max_length=255)
+    image1 = models.ImageField(upload_to='machine_model_images/')
+    image2 = models.ImageField(upload_to='machine_model_images/')
+    description = models.TextField()
+    details = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -106,7 +126,7 @@ class Bookmark(models.Model):
     machine = models.ForeignKey(Machine, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.user + self.machine
+        return f'{self.user.name} {self.machine.name}'
 
 
 class Residue(models.Model):
@@ -127,9 +147,13 @@ class Residue(models.Model):
     ]
 
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    type_of_residue = models.CharField(choices=CHOICES, max_length=200, default=RICE_STRAW)
+    type_of_residue = models.CharField(
+        choices=CHOICES, max_length=200, default=RICE_STRAW)
     price = models.IntegerField(default=0)
+    description = models.TextField(null=True, blank=True)
     quantity = models.IntegerField(default=1)
+    image = models.ImageField(
+        upload_to='residue_images/', null=True, blank=True)
 
     def __str__(self):
         return self.type_of_residue
@@ -149,10 +173,21 @@ class Order(models.Model):
     customer = models.ForeignKey(User, on_delete=models.CASCADE)
     machine = models.ForeignKey(Machine, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
-    status = models.CharField(choices=STATUS_CHOICES, max_length=30, default=PENDING)
+    status = models.CharField(choices=STATUS_CHOICES,
+                              max_length=30, default=PENDING)
+    name_of_recipient = models.CharField(max_length=30, default="Reciever")
+    phone = models.IntegerField('Phone', validators=[MaxValueValidator(
+        9999999999), MinValueValidator(1000000000)])
+    state = models.CharField(max_length=30, default="State")
+    pincode = models.IntegerField(
+        'Pincode', validators=[MaxValueValidator(999999), MinValueValidator(100000)])
+    city = models.CharField(max_length=15, default="City")
+    address = models.CharField(max_length=300, default="House Address")
+    date = models.DateField(auto_now_add=True,
+                            blank=True)
 
     def __str__(self):
-        return f'{self.customer.name} {self.machine.name} {self.quantity} {str(self.status)}'
+        return f'{self.customer.name} {self.machine.name} {self.quantity} {str(self.status)} {self.name_of_recipient} {self.phone} {self.state} {self.pincode} {self.city} {self.address} {self.date}'
 
 
 class RentOrder(models.Model):
@@ -168,11 +203,13 @@ class RentOrder(models.Model):
 
     customer = models.ForeignKey(User, on_delete=models.CASCADE)
     machine = models.ForeignKey(Machine, on_delete=models.CASCADE)
-    status = models.CharField(choices=STATUS_CHOICES, max_length=30, default=PENDING)
+    status = models.CharField(choices=STATUS_CHOICES,
+                              max_length=30, default=PENDING)
     num_of_days = models.PositiveIntegerField()
+    date = models.DateField(auto_now_add=True, blank=True)
 
     def __str__(self):
-        return f'{self.customer.name} {self.machine.name} {self.num_of_days} {str(self.status)}'
+        return f'{self.customer.name} {self.machine.name} {self.num_of_days} {str(self.status)} {self.date}'
 
 
 class ResidueOrder(models.Model):
@@ -188,26 +225,53 @@ class ResidueOrder(models.Model):
 
     customer = models.ForeignKey(User, on_delete=models.CASCADE)
     residue = models.ForeignKey(Residue, on_delete=models.CASCADE)
-    status = models.CharField(choices=STATUS_CHOICES, max_length=30, default=PENDING)
+    status = models.CharField(choices=STATUS_CHOICES,
+                              max_length=30, default=PENDING)
+    name_of_recipient = models.CharField(max_length=30, default="Reciever")
+    phone = models.IntegerField('Phone', validators=[MaxValueValidator(
+        9999999999), MinValueValidator(1000000000)], null=True, blank=True)
+    state = models.CharField(max_length=30, default="State")
+    pincode = models.IntegerField('Pincode', validators=[MaxValueValidator(
+        999999), MinValueValidator(100000)], null=True, blank=True)
+    city = models.CharField(max_length=15, default="City")
+    address = models.CharField(max_length=300, default="House Address")
 
     def __str__(self):
-        return f'{self.customer.name} {self.residue.type_of_residue} {str(self.status)}'
+        return f'{self.customer.name} {self.residue.type_of_residue} {str(self.status)} {self.name_of_recipient} {self.phone} {self.state} {self.pincode} {self.city} {self.address}'
 
 
 class Cart(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def get_items(self):
-        return self.cartitem_set.all()
+        return self.cartitem_set.filter(rent=False)
+
+    def get_residueitems(self):
+        return self.cartresidueitem_set.all()
+
+    def get_rentitems(self):
+        return self.cartitem_set.filter(rent=True)
 
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     machine = models.ForeignKey(Machine, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
+    phone = models.IntegerField('Phone', validators=[MaxValueValidator(
+        9999999999), MinValueValidator(1000000000)], null=True, blank=True)
+    rent = models.BooleanField(default=False)
+    num_of_days = models.IntegerField(default='0')
 
     def __str__(self):
-        return self.machine.name + ' ' + str(self.quantity)
+        return self.machine.name + ' ' + str(self.quantity) + ' ' + str(self.rent) + ' ' + str(self.num_of_days)
+
+
+class CartResidueItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
+    residue = models.ForeignKey(Residue, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.residue.type_of_residue
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)

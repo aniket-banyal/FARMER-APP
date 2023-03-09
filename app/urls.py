@@ -5,6 +5,7 @@ from rest_framework.authtoken import views as auth_views
 
 from app.views import (CartCheckoutView, CartItemView, CartView,
                        ChangePasswordView, Connections, MachineDetailView,
+                       Machine_modelsView, Machine_modelsDetailView, BookmarkView, BookmarkDetailView,
                        MachinesView, OrderDetailView, OrdersView, ProfileView,
                        RentOrderDetailView, RentOrdersView, ResidueDetailView,
                        ResidueOrderDetailView, ResidueOrdersView, ResiduesView,
@@ -13,10 +14,18 @@ from app.views import (CartCheckoutView, CartItemView, CartView,
 urlpatterns = [
     path('register/', registerUser.as_view(), name='register'),
     path('users/<int:pk>', UsersView.as_view(), name='user'),
-    path('users/change-password', ChangePasswordView.as_view(), name='change-password'),
+    path('users/change-password',
+         ChangePasswordView.as_view(), name='change-password'),
     path('profile/', ProfileView.as_view(), name='profile'),
     path('machines/', MachinesView.as_view(), name='machines'),
     path('machines/<int:pk>', MachineDetailView.as_view(), name='machine'),
+    path('machine_models/', Machine_modelsView.as_view(), name='machine_models'),
+    path('machine_models/<int:pk>',
+         Machine_modelsDetailView.as_view(), name='machine_model'),
+    path('bookmarks/', BookmarkView.as_view(), name='bookmarks'),
+    path('bookmarks/<int:pk>', BookmarkDetailView.as_view(),
+         name='bookmarksdetails'),
+    path('connections/', Connections.as_view(), name='connections'),
     path('residues/', ResiduesView.as_view(), name='residues'),
     path('residues/type', ResidueTypeView.as_view(), name='residue-type'),
     path('residues/<int:pk>', ResidueDetailView.as_view(), name='residue'),
@@ -28,8 +37,8 @@ urlpatterns = [
     path('rent-orders/', RentOrdersView.as_view(), name='rent-orders'),
     path('rent-orders/<int:pk>', RentOrderDetailView.as_view(), name='rent-order'),
     path('residue-orders/', ResidueOrdersView.as_view(), name='residue-orders'),
-    path('residue-orders/<int:pk>', ResidueOrderDetailView.as_view(), name='residue-order'),
-    path('connections/', Connections.as_view(), name='connections'),
+    path('residue-orders/<int:pk>',
+         ResidueOrderDetailView.as_view(), name='residue-order'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += [
