@@ -4,19 +4,23 @@ from django.urls import path
 from rest_framework.authtoken import views as auth_views
 
 from app.views import (CartCheckoutView, CartItemView, CartView,
-                       ChangePasswordView, Connections, MachineDetailView,
+                       #    ChangePasswordView,
+                       Connections, MachineDetailView,
                        Machine_modelsView, Machine_modelsDetailView, BookmarkView, BookmarkDetailView,
-                       MachinesView, OrderDetailView, OrdersView, ProfileView,
+                       MachinesView, OrderDetailView, OrdersView,
+                       #    ProfileView,
                        RentOrderDetailView, RentOrdersView, ResidueDetailView,
                        ResidueOrderDetailView, ResidueOrdersView, ResiduesView,
-                       ResidueTypeView, UsersView, registerUser)
+                       ResidueTypeView,
+                       #    UsersView, registerUser,
+                       Reports)
 
 urlpatterns = [
-    path('register/', registerUser.as_view(), name='register'),
-    path('users/<int:pk>', UsersView.as_view(), name='user'),
-    path('users/change-password',
-         ChangePasswordView.as_view(), name='change-password'),
-    path('profile/', ProfileView.as_view(), name='profile'),
+    #     path('register/', registerUser.as_view(), name='register'),
+    #     path('users/<int:pk>', UsersView.as_view(), name='user'),
+    #     path('users/change-password',
+    #          ChangePasswordView.as_view(), name='change-password'),
+    #     path('profile/', ProfileView.as_view(), name='profile'),
     path('machines/', MachinesView.as_view(), name='machines'),
     path('machines/<int:pk>', MachineDetailView.as_view(), name='machine'),
     path('machine_models/', Machine_modelsView.as_view(), name='machine_models'),
@@ -27,6 +31,7 @@ urlpatterns = [
          name='bookmarksdetails'),
     path('connections/', Connections.as_view(), name='connections'),
     path('residues/', ResiduesView.as_view(), name='residues'),
+    path('reports/', Reports.as_view(), name='reports'),
     path('residues/type', ResidueTypeView.as_view(), name='residue-type'),
     path('residues/<int:pk>', ResidueDetailView.as_view(), name='residue'),
     path('cart/', CartView.as_view(), name='cart'),
@@ -41,6 +46,6 @@ urlpatterns = [
          ResidueOrderDetailView.as_view(), name='residue-order'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-urlpatterns += [
-    path('token/', auth_views.obtain_auth_token)
-]
+# urlpatterns += [
+#     path('token/', auth_views.obtain_auth_token)
+# ]

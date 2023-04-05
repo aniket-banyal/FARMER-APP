@@ -1,23 +1,27 @@
 from django.contrib.auth import password_validation
 from rest_framework import serializers
+from users.models import User
+from users.serializers import UserSerializer
+
 
 from app.models import (Bookmark, CartItem, Delivery, Machine, Order,
-                        RentOrder, Residue, ResidueOrder, User, CartResidueItem, Machine_models)
+                        RentOrder, Residue, ResidueOrder                        # , User
+                        , CartResidueItem, Machine_models)
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username', 'password', 'name', 'email',
-                  'phone', 'is_industry', 'location']
-        extra_kwargs = {'password': {'write_only': True}}
+# class UserSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = ['username', 'password', 'name', 'email',
+#                   'phone', 'is_industry', 'location']
+#         extra_kwargs = {'password': {'write_only': True}}
 
 
-class UserUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username', 'name',
-                  'phone', 'is_industry', 'location']
+# class UserUpdateSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = ['username', 'name',
+#                   'phone', 'is_industry', 'location']
 
 
 class MachineSerializer(serializers.ModelSerializer):
@@ -223,3 +227,9 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.set_password(password)
         user.save()
         return user
+
+
+class ReportSerializer(serializers.Serializer):
+
+    Report = serializers.CharField()
+    count = serializers.IntegerField()

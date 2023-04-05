@@ -1,4 +1,13 @@
-env
 db.sqlite3
-**/__pycache__
+bin/*.bash
+logs/*.log
+run/*.sock
+static
 media
+
+*.pyc
+env
+.vscode
+
+
+'venv'

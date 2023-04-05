@@ -1,0 +1,35 @@
+
+
+<html>
+
+<body>
+	<table style="border: 1px solid black; width: 100%; word-wrap:break-word;
+              table-layout: fixed;">
+			<thead style = "padding: 10px">
+				<th>SNO.</th>
+				<th>NAME</th>
+				<th>USERNAME</th>
+				<th>EMAIL</th>
+				<th>NUMBER</th>
+				<th>DDA ASSIGNED</th>
+				<th>VILLAGES</th>
+
+			</thead>
+	{% for object in objects %}
+		<tr style = "margin-bottom:5%;padding: 6px">
+			<td style="width: 30px; text-align:'center'">{{object.id}}</td>
+			<td>{{object.name}}</td>
+			<td>{{object.username}}</td>
+			<td style="word-wrap:break-word;">{{object.email}}</td>
+			<td style="width: 100px">{{object.number}}</td>
+			<td>{{object.d}}</td>
+			<td>{% for village in object.villages %}
+					{{village}}<br>
+				{% endfor %}
+			</td>
+		</tr>
+
+	{% endfor %}
+	</table>
+	</body>
+</html>

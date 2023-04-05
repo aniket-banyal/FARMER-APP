@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+	   <meta http-equiv="content-type" content="text/html; charset=utf-8" >
+	   <meta name = 'viewport' content = 'initial-scale = 1' >
+	   <style type="text/css">
+	   		@font-face { font-family: Hindi; src: url(/static/pdf.ttf); }
+	   		@font-face { font-family: Roboto; src: url(/static/Roboto-Regular.ttf); }
+	   		@font-face { font-family: Roboto Bold; src: url(/static/Roboto-Bold.ttf); }
+			body {
+			    font-family: Hindi, "Arial Black";
+			    color: #333333;
+			    line-height: 4px !important;
+			    font-size: 14px !important;
+			    word-break: break-word;
+			}
+			/* table { page-break-inside:auto }
+		    tr    { page-break-inside:auto !important; page-break-after:avoid }
+		    thead { display:table-header-group }
+		    tfoot { display:table-footer-group } */
+	   		@page {
+	            size: A4;
+	            margin: 1cm;
+	            size: landscape;
+	        }
+	        b{
+	        	font-weight: 700 !important;
+	        	font-family: Roboto Bold, Hindi, "Arial Black";
+	        }
+	        .table {
+	            width: 100%;
+	            max-width: 100%;
+	            margin-bottom: 5px;
+	            background-color: #fff;
+	            border-spacing: 0px;
+	            table-layout:fixed;
+	            border-top: 2px solid black;
+	            word-break:break-word;
+	        }
+	        * { 
+				  word-wrap:break-word;
+				}
+	        .table th,
+	        .table td {
+	            padding: 0px;
+	            vertical-align: top;
+	            border-bottom: 2px solid #000;
+	            border-right: 2px solid #000;
+	            border-left: 2px solid #000;
+	            text-align: center;
+	            font-size: 16px !important;
+	            overflow-wrap: break-word;
+	            word-break:break-word !important;
+	        }
+	        .table thead th {
+	            vertical-align: bottom;
+	            border: 2px solid #000;
+	            border-top: 2px solid #000;
+	            font-weight: 700 !important;
+	        	font-family: Roboto Bold, Hindi, "Arial Black" !important;
+	        }
+	        .table tbody + tbody {
+	            border-top: 2px solid #000;
+	        }
+	        .table .table {
+	            background-color: #fff;
+	        }
+	        /* #sno {
+	        	width: 20px !important;
+	        } */
+	   </style>
+</head>
+<body style="padding:20px">
+	{% for row in data %}
+	<div style="page-break-after: always">
+		<center>
+			<b><h1>Department of Agriculture and Farmers Welfare Haryana</h1></b>
+		</center>
+		<div>
+			<b>Serial No.</b> {{sno}}
+		</div>
+		<div>
+			<b>Date</b> {{date}}
+		</div>
+		<p style="margin-top:8px">Given Information is provided by HARSAC about the detected Active Fire Location:</p>
+		<table class="table">
+			<thead>
+				<b><th id="sno">Sno</th></b>
+				<b><th style="min-width:10%; word-break: break-word">District</th></b>
+				<b><th style="min-width:10%; word-break: break-word">Block Name</th></b>
+				<b><th style="min-width:10%; word-break: break-word">Village Name</th></b>
+				<b><th style="min-width:10%; word-break: break-word">Longitude</th></b>
+				<b><th style="min-width:10%; word-break: break-word">Latitude</th></b>
+				<b><th style="min-width:10%; word-break: break-word">Acq Date</th></b>
+				<b><th style="min-width:10%; word-break: break-word">Acq Time</th></b>
+				<b><th style="min-width:10%; word-break: break-word">Murraba No.</th></b>
+				<b><th style="min-width:10%; word-break: break-word">Kila no.</th></b>
+			</thead>
+			<tbody>
+					<tr>
+						<td id="sno">{{ forloop.counter }}</td>
+						{% for x in row.data %}
+							<td>{{x}}</td>						
+						{% endfor %}
+					</tr>
+			</tbody>
+		</table>
+		<div class="owners-list">
+			{% if row.owners %}
+			    <b><h3>List of owners:- </h3></b>
+			{% endif %}
+        	<div style="border: 2px solid black;">{{row.owners}}</div>
+		</div>
+		<b><p>You are advised to act accordingly, and immediately.</p></b>
+		<div style="text-align: right">
+			<b>Department of Agriculture and Farmers Welfare, Haryana</b>
+		</div>
+	</div>
+	{% endfor %}
+</body>
+</html>
